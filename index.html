@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Certificados Estudiantiles - CESDE</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="date"], input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin: 20px auto;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #firmaPreview {
+            max-width: 200px;
+            max-height: 100px;
+            margin-top: 10px;
+            display: none;
+        }
+        .certificado-container {
+            margin-top: 30px;
+            border: 1px dashed #ccc;
+            padding: 20px;
+            min-height: 200px;
+            display: none;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Generador de Certificados Estudiantiles</h1>
+        <p>Complete el formulario para generar el certificado:</p>
+        
+        <form id="certificadoForm">
+            <div class="form-group">
+                <label for="nombre">Nombre completo del estudiante:</label>
+                <input type="text" id="nombre" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="documento">Número de documento:</label>
+                <input type="text" id="documento" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="programa">Programa académico:</label>
+                <input type="text" id="programa" value="Técnico Laboral por Competencias en Auxiliar en Desarrollo de Aplicaciones Informáticas" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="modulo">Módulo actual:</label>
+                <input type="text" id="modulo" value="primero de tres" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="horas">Horas teórico-prácticas:</label>
+                <input type="text" id="horas" value="255" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="totalHoras">Total de horas del programa:</label>
+                <input type="text" id="totalHoras" value="694" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="periodo">Período académico:</label>
+                <input type="text" id="periodo" value="1-2025" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="inicio">Fecha de inicio:</label>
+                <input type="date" id="inicio" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="fin">Fecha de finalización:</label>
+                <input type="date" id="fin" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="firma">Firma del responsable (imagen PNG/JPG):</label>
+                <input type="file" id="firma" accept="image/*" required>
+                <img id="firmaPreview" src="#" alt="Vista previa de la firma">
+            </div>
+            
+            <button type="button" id="generarBtn">Generar Certificado</button>
+        </form>
+        
+        <div id="certificadoPreview" class="certificado-container">
+            <!-- Plantilla del certificado -->
+            <div id="certificadoPlantilla" style="padding: 20px; font-family: 'Times New Roman', serif;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <img src="https://via.placeholder.com/150x50?text=Logo+CESDE" alt="Logo CESDE" style="height: 80px;">
+                    <h2 style="color: #2c3e50;">CERTIFICADO ACADÉMICO</h2>
+                </div>
+                
+                <p style="text-align: justify; line-height: 1.6;">
+                    Por medio del presente certificado se hace constar que el/la estudiante 
+                    <strong><span id="certNombre"></span></strong>, identificado(a) con documento número 
+                    <strong><span id="certDocumento"></span></strong>, está matriculado(a) en el programa de 
+                    <strong><span id="certPrograma"></span></strong>, actualmente cursando el 
+                    <strong><span id="certModulo"></span></strong> módulo.
+                </p>
+                
+                <p style="text-align: justify; line-height: 1.6;">
+                    Ha completado <strong><span id="certHoras"></span></strong> horas teórico-prácticas de un total de 
+                    <strong><span id="certTotalHoras"></span></strong> horas del programa, durante el período académico 
+                    <strong><span id="certPeriodo"></span></strong>, desde el <strong><span id="certInicio"></span></strong> 
+                    hasta el <strong><span id="certFin"></span></strong>.
+                </p>
+                
+                <p style="text-align: justify; line-height: 1.6;">
+                    Se expide el presente certificado a solicitud del interesado(a) para los fines que estime convenientes.
+                </p>
+                
+                <div style="margin-top: 50px; display: flex; justify-content: space-between;">
+                    <div style="text-align: center;">
+                        <div id="firmaContainer" style="height: 80px; margin-bottom: 10px;"></div>
+                        <div style="border-top: 1px solid #333; width: 200px; margin: 0 auto; padding-top: 5px;">
+                            Firma del responsable
+                        </div>
+                    </div>
+                    <div style="text-align: center;">
+                        <p>Fecha: <span id="certFecha"></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Mostrar vista previa de la firma
+        document.getElementById('firma').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const firmaPreview = document.getElementById('firmaPreview');
+                    firmaPreview.src = event.target.result;
+                    firmaPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Función para generar el certificado
+        document.getElementById('generarBtn').addEventListener('click', function() {
+            // Obtener valores del formulario
+            const nombre = document.getElementById('nombre').value;
+            const documento = document.getElementById('documento').value;
+            const programa = document.getElementById('programa').value;
+            const modulo = document.getElementById('modulo').value;
+            const horas = document.getElementById('horas').value;
+            const totalHoras = document.getElementById('totalHoras').value;
+            const periodo = document.getElementById('periodo').value;
+            const inicio = new Date(document.getElementById('inicio').value).toLocaleDateString('es-ES');
+            const fin = new Date(document.getElementById('fin').value).toLocaleDateString('es-ES');
+            const firma = document.getElementById('firmaPreview').src;
+            
+            // Rellenar la plantilla del certificado
+            document.getElementById('certNombre').textContent = nombre;
+            document.getElementById('certDocumento').textContent = documento;
+            document.getElementById('certPrograma').textContent = programa;
+            document.getElementById('certModulo').textContent = modulo;
+            document.getElementById('certHoras').textContent = horas;
+            document.getElementById('certTotalHoras').textContent = totalHoras;
+            document.getElementById('certPeriodo').textContent = periodo;
+            document.getElementById('certInicio').textContent = inicio;
+            document.getElementById('certFin').textContent = fin;
+            document.getElementById('certFecha').textContent = new Date().toLocaleDateString('es-ES');
+            
+            // Insertar la firma en el certificado
+            const firmaContainer = document.getElementById('firmaContainer');
+            firmaContainer.innerHTML = '';
+            if (firma && firma !== '#') {
+                const imgFirma = document.createElement('img');
+                imgFirma.src = firma;
+                imgFirma.style.maxHeight = '80px';
+                imgFirma.style.maxWidth = '200px';
+                firmaContainer.appendChild(imgFirma);
+            }
+            
+            // Mostrar vista previa del certificado
+            document.getElementById('certificadoPreview').style.display = 'block';
+            
+            // Generar PDF
+            generarPDF();
+        });
+
+        function generarPDF() {
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('certificadoPlantilla');
+            
+            html2canvas(element, {
+                scale: 2,
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgWidth = 210; // A4 width in mm
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                pdf.save('certificado_' + document.getElementById('documento').value + '.pdf');
+            });
+        }
+    </script>
+</body>
+</html>
